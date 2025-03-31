@@ -4,8 +4,10 @@
 #include <fstream>
 using namespace std;
 
-Node* add(Node* root, int addInput, Node* parent);
+Node* add(Node* root, int addInput, Node* parent, Node* root2);
 void printTree(Node* root, int depth);
+void rotateLeft(Node* &root, Node* parent, Node* u, Node* v);
+void rotateRight(Node* &root, Node* parent, Node* u, Node* v);
 int main() {
   bool quit = false;
   char input[30];
@@ -26,7 +28,7 @@ int main() {
 	cout << "What is the number you'd like to add?" << endl;
 	int addInput;
 	cin >> addInput;
-	root = add(root, addInput, NULL);
+	root = add(root, addInput, NULL, root);
 	root->setColor(1);
       }
       else if (strcmp(choiceInput, "FILE") == 0) {
@@ -34,7 +36,7 @@ int main() {
 	ifstream sequence("numbers.txt");
 	int number;
 	while (sequence >> number) {
-	  root = add(root, number, NULL);
+	  root = add(root, number, NULL, root);
 	}
 	root->setColor(1);
       }
@@ -47,7 +49,7 @@ int main() {
 }
 
 
-Node* add(Node* root, int addInput, Node* parent) {
+Node* add(Node* root, int addInput, Node* parent, Node* root2) {
   if (!root) {
     Node* newNode = new Node(addInput);
     newNode->setColor(0);
@@ -56,7 +58,7 @@ Node* add(Node* root, int addInput, Node* parent) {
   }
   // recurse left if it's smaller
   else if (root->getValue() > addInput) {
-    root->setLeft(add(root->getLeft(), addInput, root));
+    root->setLeft(add(root->getLeft(), addInput, root, root2));
     // if two consecutive nodes are red
     if (root->getLeft()->getColor() == 0 && root->getColor() == 0) {
       // is the uncle red?
@@ -67,13 +69,18 @@ Node* add(Node* root, int addInput, Node* parent) {
 	root->getRight()->setColor(1);
       }
       else {
-	// uncle is black, rotation needed...
+	if (root->getLeft()->getLeft() && root->getLeft()->getLeft()->getValue() == addInput) {
+	  // away
+	}
+	else {
+	  // toward
+	}
       }
     }
   }
   // recurse right if it's bigger
   else {
-    root->setRight(add(root->getRight(), addInput, root));
+    root->setRight(add(root->getRight(), addInput, root, root2));
     // two consecutive are red
     if (root->getRight()->getColor() == 0 && root->getColor() == 0) {
       // is the uncle red?
@@ -101,4 +108,34 @@ void printTree(Node* root, int depth) {
   if (root->getLeft() != NULL) {
     printTree(root->getLeft(), depth+1);
   }
+}
+
+void rotateLeft(Node* &root, Node* parent, Node* u, Node* v) {
+  v = u->getRight();
+  u->setRight(v->getLeft());
+  if (parent == root) {
+    root = v;
+  }
+  else if (parent->getLeft() == u) {
+    parent->setLeft(v);
+  }
+  else {
+    parent->setRight(v);
+  }
+  v->setLeft(u);
+}
+
+void rotateRight(Node* &root, Node* parent, Node* u, Node* v) {
+  v = u->getLeft();
+  u->setLeft(v->getRight());
+  if (parent == root) {
+    root = v;
+  }
+  else if (parent->getLeft() == u) {
+    parent->setLeft(v);
+  }
+  else {
+    parent->setRight(v);
+  }
+  v->setRight(u);
 }
