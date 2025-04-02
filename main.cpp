@@ -4,10 +4,10 @@
 #include <fstream>
 using namespace std;
 
-Node* add(Node* root, int addInput, Node* parent, Node* root2);
+Node* add(Node* root, int addInput, Node* root2);
 void printTree(Node* root, int depth);
-void rotateLeft(Node* &root, Node* parent, Node* u, Node* v);
-void rotateRight(Node* &root, Node* parent, Node* u, Node* v);
+void rotateLeft(Node* &root, Node* u);
+void rotateRight(Node* &root, Node* u);
 int main() {
   bool quit = false;
   char input[30];
@@ -28,7 +28,7 @@ int main() {
 	cout << "What is the number you'd like to add?" << endl;
 	int addInput;
 	cin >> addInput;
-	root = add(root, addInput, NULL, root);
+	root = add(root, addInput, root);
 	root->setColor(1);
       }
       else if (strcmp(choiceInput, "FILE") == 0) {
@@ -36,9 +36,9 @@ int main() {
 	ifstream sequence("numbers.txt");
 	int number;
 	while (sequence >> number) {
-	  root = add(root, number, NULL, root);
+	  root = add(root, number, root);
+	  root->setColor(1);
 	}
-	root->setColor(1);
       }
     }
     else if (strcmp(input, "PRINT") == 0) {
@@ -49,16 +49,22 @@ int main() {
 }
 
 
-Node* add(Node* root, int addInput, Node* parent, Node* root2) {
+Node* add(Node* root, int addInput, Node* root2) {
   if (!root) {
     Node* newNode = new Node(addInput);
     newNode->setColor(0);
-    newNode->setParent(parent);
+    newNode->setParent(root);
     return newNode;
   }
   // recurse left if it's smaller
   else if (root->getValue() > addInput) {
-    root->setLeft(add(root->getLeft(), addInput, root, root2));
+    root->setLeft(add(root->getLeft(), addInput, root2));
+    if (root->getLeft()) {
+      root->getLeft()->setParent(root);
+    }
+    if (root->getRight()) {
+      root->getRight()->setParent(root);
+    }
     // if two consecutive nodes are red
     if (root->getLeft()->getColor() == 0 && root->getColor() == 0) {
       // is the uncle red?
@@ -70,7 +76,9 @@ Node* add(Node* root, int addInput, Node* parent, Node* root2) {
       }
       else {
 	if (root->getLeft()->getLeft() && root->getLeft()->getLeft()->getValue() == addInput) {
-	  // away
+	  rotateRight(root2, root);
+	  root->getParent()->setColor(1);
+	  root->setColor(0);
 	}
 	else {
 	  // toward
@@ -80,7 +88,13 @@ Node* add(Node* root, int addInput, Node* parent, Node* root2) {
   }
   // recurse right if it's bigger
   else {
-    root->setRight(add(root->getRight(), addInput, root, root2));
+    root->setRight(add(root->getRight(), addInput, root2));
+    if (root->getLeft()) {
+      root->getLeft()->setParent(root);
+    }
+    if (root->getRight()) {
+      root->getRight()->setParent(root);
+    }
     // two consecutive are red
     if (root->getRight()->getColor() == 0 && root->getColor() == 0) {
       // is the uncle red?
@@ -91,6 +105,16 @@ Node* add(Node* root, int addInput, Node* parent, Node* root2) {
       }
     }
     else {
+      if (root->getRight()->getRight() && root->getRight()->getRight()->getValue() == addInput) {
+	cout << "skibs 2" << endl;
+	rotateLeft(root2, root);
+	root->getParent()->setColor(1);
+	cout << "skibs 3" << endl;
+	root->setColor(0);
+      }
+      else {
+
+      }
       //uncle is black, rotation needed...
     }
   }
@@ -110,32 +134,42 @@ void printTree(Node* root, int depth) {
   }
 }
 
-void rotateLeft(Node* &root, Node* parent, Node* u, Node* v) {
-  v = u->getRight();
+void rotateLeft(Node* &root, Node* u) {
+  Node* v = u->getRight();
   u->setRight(v->getLeft());
-  if (parent == root) {
+  if (v->getLeft() != NULL) {
+    v->getLeft()->setParent(u);
+  }
+  v->setParent(u->getParent());
+  if (u->getParent() == NULL) {
     root = v;
   }
-  else if (parent->getLeft() == u) {
-    parent->setLeft(v);
+  else if (u->getParent()->getLeft() == u) {
+    u->getParent()->setLeft(v);
   }
   else {
-    parent->setRight(v);
+    u->getParent()->setRight(v);
   }
   v->setLeft(u);
+  u->setParent(v);
 }
 
-void rotateRight(Node* &root, Node* parent, Node* u, Node* v) {
-  v = u->getLeft();
+void rotateRight(Node* &root, Node* u) {
+  Node* v = u->getLeft();
   u->setLeft(v->getRight());
-  if (parent == root) {
+  if (v->getRight() != NULL) {
+    v->getRight()->setParent(u);
+  }
+  v->setParent(u->getParent());
+  if (u->getParent() == NULL) {
     root = v;
   }
-  else if (parent->getLeft() == u) {
-    parent->setLeft(v);
+  else if (u->getParent()->getLeft() == u) {
+    u->getParent()->setLeft(v);
   }
   else {
-    parent->setRight(v);
+    u->getParent()->setRight(v);
   }
   v->setRight(u);
+  u->setParent(v);
 }
