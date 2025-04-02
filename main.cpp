@@ -28,7 +28,7 @@ int main() {
 	cout << "What is the number you'd like to add?" << endl;
 	int addInput;
 	cin >> addInput;
-	root = add(root, addInput, root);
+	root = add(root, addInput, NULL);
 	root->setColor(1);
       }
       else if (strcmp(choiceInput, "FILE") == 0) {
@@ -36,7 +36,7 @@ int main() {
 	ifstream sequence("numbers.txt");
 	int number;
 	while (sequence >> number) {
-	  root = add(root, number, root);
+	  root = add(root, number, NULL);
 	  root->setColor(1);
 	}
       }
@@ -53,32 +53,39 @@ Node* add(Node* root, int addInput, Node* root2) {
   if (!root) {
     Node* newNode = new Node(addInput);
     newNode->setColor(0);
-    newNode->setParent(root);
+    newNode->setParent(root2);
     return newNode;
   }
   // recurse left if it's smaller
   else if (root->getValue() > addInput) {
-    root->setLeft(add(root->getLeft(), addInput, root2));
-    if (root->getLeft()) {
-      root->getLeft()->setParent(root);
-    }
-    if (root->getRight()) {
-      root->getRight()->setParent(root);
-    }
+    root->setLeft(add(root->getLeft(), addInput, root));
     // if two consecutive nodes are red
     if (root->getLeft()->getColor() == 0 && root->getColor() == 0) {
       // is the uncle red?
+      cout << "two reds" << endl;
       if (root->getRight() && root->getRight()->getColor() == 0) {
+	cout << "red uncle" << endl;
 	// if so, grandparent becomes red, parent and uncle become black.
-	root->setColor(0);
-	root->getLeft()->setColor(1);
+	if (root->getParent()) {
+	  root->getParent()->setColor(0);
+	}
+	root->setColor(1);
 	root->getRight()->setColor(1);
       }
       else {
+	cout << "black uncle" << endl;
 	if (root->getLeft()->getLeft() && root->getLeft()->getLeft()->getValue() == addInput) {
-	  rotateRight(root2, root);
-	  root->getParent()->setColor(1);
+	  cout << "away" << endl;
+	  if (root->getParent() == NULL) {
+	    rotateRight(root, root);
+	  }
+	  else {
+	    rotateRight(root2, root);
+	  }
 	  root->setColor(0);
+	  if (root->getParent() != NULL) {
+	    root->getParent()->setColor(1);
+	  }
 	}
 	else {
 	  // toward
@@ -88,29 +95,34 @@ Node* add(Node* root, int addInput, Node* root2) {
   }
   // recurse right if it's bigger
   else {
-    root->setRight(add(root->getRight(), addInput, root2));
-    if (root->getLeft()) {
-      root->getLeft()->setParent(root);
-    }
-    if (root->getRight()) {
-      root->getRight()->setParent(root);
-    }
+    root->setRight(add(root->getRight(), addInput, root));
     // two consecutive are red
     if (root->getRight()->getColor() == 0 && root->getColor() == 0) {
       // is the uncle red?
+      cout << "two reds" << endl;
       if (root->getLeft() && root->getLeft()->getColor() == 0) {
-	root->setColor(0);
+	cout << "red uncle" << endl;
+	if (root->getParent() != NULL) {
+	  root->getParent()->setColor(0);
+	}
+	root->setColor(1);
 	root->getLeft()->setColor(1);
-	root->getRight()->setColor(1);
       }
     }
     else {
+      cout << "black uncle" << endl;
       if (root->getRight()->getRight() && root->getRight()->getRight()->getValue() == addInput) {
 	cout << "skibs 2" << endl;
-	rotateLeft(root2, root);
-	root->getParent()->setColor(1);
-	cout << "skibs 3" << endl;
+	if (root->getParent() == NULL) {
+	  rotateLeft(root, root);
+	}
+	else {
+	  rotateLeft(root2, root);
+	}
 	root->setColor(0);
+	if (root->getParent() != NULL) {
+	  root->getParent()->setColor(1);
+	}
       }
       else {
 
@@ -144,7 +156,7 @@ void rotateLeft(Node* &root, Node* u) {
   if (u->getParent() == NULL) {
     root = v;
   }
-  else if (u->getParent()->getLeft() == u) {
+  else if (u == u->getParent()->getLeft()) {
     u->getParent()->setLeft(v);
   }
   else {
@@ -164,7 +176,7 @@ void rotateRight(Node* &root, Node* u) {
   if (u->getParent() == NULL) {
     root = v;
   }
-  else if (u->getParent()->getLeft() == u) {
+  else if (u == u->getParent()->getLeft()) {
     u->getParent()->setLeft(v);
   }
   else {
