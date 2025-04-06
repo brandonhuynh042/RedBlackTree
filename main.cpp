@@ -6,8 +6,8 @@ using namespace std;
 
 Node* add(Node* root, int addInput, Node* root2, Node* &actualRoot);
 void printTree(Node* root, int depth);
-void rotateLeft(Node* &root, Node* &u);
-void rotateRight(Node* &root, Node* &u);
+void rotateLeft(Node* &actualRoot, Node* &u);
+void rotateRight(Node* &actualRoot, Node* &u);
 int main() {
   bool quit = false;
   char input[30];
@@ -58,7 +58,9 @@ Node* add(Node* root, int addInput, Node* root2, Node* &actualRoot) {
   }
   // recurse left if it's smaller
   else if (root->getValue() > addInput) {
-    root->setLeft(add(root->getLeft(), addInput, root, actualRoot));
+    Node* leftAdd = add(root->getLeft(), addInput, root, actualRoot);
+    root->setLeft(leftAdd);
+    leftAdd->setParent(root);
     // if two consecutive nodes are red
     if (root->getLeft()->getColor() == 0 && root->getColor() == 0) {
       // is the uncle red?
@@ -76,17 +78,15 @@ Node* add(Node* root, int addInput, Node* root2, Node* &actualRoot) {
 	cout << "black uncle" << endl;
 	if (root->getLeft() && root->getLeft()->getValue() == addInput) {
 	  cout << "away" << endl;
-	  if (root2->getParent() == NULL) {
-	    rotateRight(actualRoot, root2);
-	  }
-	  else {
-	    cout << "no root parent" << endl;
-	    rotateRight(actualRoot, root2);
-	  }
-	  root->setColor(0);
+	  rotateRight(actualRoot, root2);
+	  cout << "actual root:" << actualRoot->getValue() << endl;
+	  cout << "root 2: " << root2->getValue() << endl;
+	  cout << "root: " << root->getValue() << endl;
+	  root->setColor(1);
 	  if (root->getParent() != NULL) {
-	    root->getParent()->setColor(1);
+	    root->getParent()->setColor(0);
 	  }
+	  printTree(actualRoot, 0);
 	}
 	else {
 	  // toward
@@ -96,7 +96,9 @@ Node* add(Node* root, int addInput, Node* root2, Node* &actualRoot) {
   }
   // recurse right if it's bigger
   else {
-    root->setRight(add(root->getRight(), addInput, root, actualRoot));
+    Node* rightAdd = add(root->getRight(), addInput, root, actualRoot);
+    root->setRight(rightAdd);
+    rightAdd->setParent(root);
     // two consecutive are red
     if (root->getRight()->getColor() == 0 && root->getColor() == 0) {
       // is the uncle red?
@@ -114,14 +116,8 @@ Node* add(Node* root, int addInput, Node* root2, Node* &actualRoot) {
       cout << "black uncle" << endl;
       if (root->getRight()->getRight() && root->getRight()->getRight()->getValue() == addInput) {
 	cout << "skibs 2" << endl;
-	if (root2->getParent() == NULL) {
 	  rotateLeft(actualRoot, root2);
-	}
-	else {
-	  cout << "no root parent" << endl;
 	  cout << root2->getValue() << " " << root->getValue() << endl;
-	  rotateLeft(actualRoot, root2);
-	}
 	root->setColor(0);
 	if (root->getParent() != NULL) {
 	  root->getParent()->setColor(1);
@@ -133,10 +129,15 @@ Node* add(Node* root, int addInput, Node* root2, Node* &actualRoot) {
       //uncle is black, rotation needed...
     }
   }
-  return root;
+  printTree(actualRoot, 0);
+  cout << "returning: " << actualRoot->getValue() << endl;
+  return actualRoot;
 }
 
 void printTree(Node* root, int depth) {
+  if (root == NULL) {
+    return;
+  }
   if (root->getRight() != NULL) {
     printTree(root->getRight(), depth+1);
   }
@@ -149,7 +150,7 @@ void printTree(Node* root, int depth) {
   }
 }
 
-void rotateLeft(Node* &root, Node* &u) {
+void rotateLeft(Node* &actualRoot, Node* &u) {
   Node* v = u->getRight();
   cout << v->getValue() << endl;
   u->setRight(v->getLeft());
@@ -159,7 +160,7 @@ void rotateLeft(Node* &root, Node* &u) {
   v->setParent(u->getParent());
   if (u->getParent() == NULL) {
     cout << "new root" << endl;
-    root = v;
+    actualRoot = v;
   }
   else if (u == u->getParent()->getLeft()) {
     u->getParent()->setLeft(v);
@@ -171,9 +172,8 @@ void rotateLeft(Node* &root, Node* &u) {
   u->setParent(v);
 }
 
-void rotateRight(Node* &root, Node* &u) {
+void rotateRight(Node* &actualRoot, Node* &u) {
   Node* v = u->getLeft();
-  cout << v->getValue() << endl;
   u->setLeft(v->getRight());
   if (v->getRight() != NULL) {
     v->getRight()->setParent(u);
@@ -181,7 +181,7 @@ void rotateRight(Node* &root, Node* &u) {
   v->setParent(u->getParent());
   if (u->getParent() == NULL) {
     cout << "new root" << endl;
-    root = v;
+    actualRoot = v;
   }
   else if (u == u->getParent()->getLeft()) {
     u->getParent()->setLeft(v);
