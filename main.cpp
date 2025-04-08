@@ -4,7 +4,9 @@
 #include <fstream>
 using namespace std;
 
-Node* add(Node* root, int addInput, Node* root2, Node* &actualRoot);
+void add(Node* &actualRoot, int addInput);
+Node* insert(Node* root, int value, Node* parent, Node* &added);
+void fixTree(Node* &actualRoot, Node* added);
 void printTree(Node* root, int depth);
 void rotateLeft(Node* &actualRoot, Node* &u);
 void rotateRight(Node* &actualRoot, Node* &u);
@@ -28,16 +30,14 @@ int main() {
 	cout << "What is the number you'd like to add?" << endl;
 	int addInput;
 	cin >> addInput;
-	root = add(root, addInput, NULL, root);
-	root->setColor(1);
+	add(root, addInput);
       }
       else if (strcmp(choiceInput, "FILE") == 0) {
 	// read in file, add one number at a time
 	ifstream sequence("numbers.txt");
 	int number;
 	while (sequence >> number) {
-	  root = add(root, number, NULL, root);
-	  root->setColor(1);
+	  add(root, number);
 	}
       }
     }
@@ -48,90 +48,97 @@ int main() {
   return 0;
 }
 
-
-Node* add(Node* root, int addInput, Node* root2, Node* &actualRoot) {
-  if (!root) {
+void add(Node* &actualRoot, int addInput) {
+  Node* added = NULL;
+  actualRoot = insert(actualRoot, addInput, NULL, added);
+  fixTree(actualRoot, added);
+}
+Node* insert(Node* root, int addInput, Node* parent, Node* &added) {
+  if (root == NULL) {
     Node* newNode = new Node(addInput);
     newNode->setColor(0);
-    newNode->setParent(root2);
+    newNode->setParent(parent);
+    added = newNode;
     return newNode;
   }
   // recurse left if it's smaller
-  else if (root->getValue() > addInput) {
-    Node* leftAdd = add(root->getLeft(), addInput, root, actualRoot);
+  if (addInput < root->getValue()) {
+    Node* leftAdd = insert(root->getLeft(), addInput, root, added);
     root->setLeft(leftAdd);
-    leftAdd->setParent(root);
-    // if two consecutive nodes are red
-    if (root->getLeft()->getColor() == 0 && root->getColor() == 0) {
-      // is the uncle red?
-      cout << "two reds" << endl;
-      if (root->getRight() && root->getRight()->getColor() == 0) {
-	cout << "red uncle" << endl;
-	// if so, grandparent becomes red, parent and uncle become black.
-	if (root->getParent()) {
-	  root->getParent()->setColor(0);
-	}
-	root->setColor(1);
-	root->getRight()->setColor(1);
-      }
-      else {
-	cout << "black uncle" << endl;
-	if (root->getLeft() && root->getLeft()->getValue() == addInput) {
-	  cout << "away" << endl;
-	  rotateRight(actualRoot, root2);
-	  cout << "actual root:" << actualRoot->getValue() << endl;
-	  cout << "root 2: " << root2->getValue() << endl;
-	  cout << "root: " << root->getValue() << endl;
-	  root->setColor(1);
-	  if (root->getParent() != NULL) {
-	    root->getParent()->setColor(0);
-	  }
-	  printTree(actualRoot, 0);
-	}
-	else {
-	  // toward
-	}
-      }
-    }
   }
   // recurse right if it's bigger
   else {
-    Node* rightAdd = add(root->getRight(), addInput, root, actualRoot);
+    Node* rightAdd = insert(root->getRight(), addInput, root, added);
     root->setRight(rightAdd);
-    rightAdd->setParent(root);
-    // two consecutive are red
-    if (root->getRight()->getColor() == 0 && root->getColor() == 0) {
-      // is the uncle red?
-      cout << "two reds" << endl;
-      if (root->getLeft() && root->getLeft()->getColor() == 0) {
-	cout << "red uncle" << endl;
-	if (root->getParent() != NULL) {
-	  root->getParent()->setColor(0);
-	}
-	root->setColor(1);
-	root->getLeft()->setColor(1);
+  }
+  return root;
+}
+
+void fixTree(Node* &actualRoot, Node* added) {
+  // going bottom up iteratively
+  while (added != actualRoot && added->getParent() && added->getParent()->getColor() == 0) {
+    Node* parent = added->getParent();
+    Node* grandparent = parent->getParent();
+    // hit the top of the tree?
+    if (grandparent == NULL) {
+      break;
+    }
+    // parent is on left...
+    if (parent == grandparent->getLeft()) {
+      Node* uncle = grandparent->getRight();
+      // if the uncle is red...
+      if (uncle != NULL && uncle->getColor() == 0) {
+	// swap grandparent & parent colors, move up a layer
+        parent->setColor(1);
+        uncle->setColor(1);
+        grandparent->setColor(0);
+        added = grandparent;
+      }
+      // uncle is black...
+      else {
+	// toward case
+        if (added == parent->getRight()) {
+          rotateLeft(actualRoot, parent);
+          added = parent;
+          parent = added->getParent();
+        }
+        // away case; rotate right, recolor parent/gp
+        rotateRight(actualRoot, grandparent);
+        parent->setColor(1);
+        grandparent->setColor(0);
+        added = parent;
+	return; // no need to escalate
       }
     }
+    // parent is on right.,.
     else {
-      cout << "black uncle" << endl;
-      if (root->getRight()->getRight() && root->getRight()->getRight()->getValue() == addInput) {
-	cout << "skibs 2" << endl;
-	  rotateLeft(actualRoot, root2);
-	  cout << root2->getValue() << " " << root->getValue() << endl;
-	root->setColor(0);
-	if (root->getParent() != NULL) {
-	  root->getParent()->setColor(1);
-	}
+      Node* uncle = grandparent->getLeft();
+      // uncle is red...
+      if (uncle != NULL && uncle->getColor() == 0) {
+	// swap colors with grandparent, move up a layer
+        parent->setColor(1);
+        uncle->setColor(1);
+        grandparent->setColor(0);
+        added = grandparent;
       }
+      // uncle is black...
       else {
-
+        if (added == parent->getLeft()) {
+          // toward case
+          rotateRight(actualRoot, parent);
+          added = parent;
+          parent = added->getParent();
+        }
+        // away case: rotate left, recolor parent/gp
+        rotateLeft(actualRoot, grandparent);
+        parent->setColor(1);
+        grandparent->setColor(0);
+        added = parent;
+	return; // no need to escalate
       }
-      //uncle is black, rotation needed...
     }
   }
-  printTree(actualRoot, 0);
-  cout << "returning: " << actualRoot->getValue() << endl;
-  return actualRoot;
+  actualRoot->setColor(1); // root is always black
 }
 
 void printTree(Node* root, int depth) {
