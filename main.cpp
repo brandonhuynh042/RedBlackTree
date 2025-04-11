@@ -3,6 +3,8 @@
 #include <cstring>
 #include <fstream>
 using namespace std;
+/* This program implements insertion for a red black tree.
+ * Brandon Huynh, last edited 4/11/2025 */
 
 void add(Node* &actualRoot, int addInput);
 Node* insert(Node* root, int value, Node* parent, Node* &added);
@@ -10,13 +12,16 @@ void fixTree(Node* &actualRoot, Node* added);
 void printTree(Node* root, int depth);
 void rotateLeft(Node* &actualRoot, Node* &u);
 void rotateRight(Node* &actualRoot, Node* &u);
+
 int main() {
   bool quit = false;
   char input[30];
   Node* root = NULL;
   do {
+    // what do they want to do?
      cout << "You can: \'ADD\' \'PRINT\' \'QUIT\'" << endl;
     cin >> input;
+    // quit...
     if (strcmp(input, "QUIT") == 0) {
       quit = true;
     }
@@ -50,10 +55,13 @@ int main() {
 
 void add(Node* &actualRoot, int addInput) {
   Node* added = NULL;
+  // insertion like a binary search tree
   actualRoot = insert(actualRoot, addInput, NULL, added);
+  // fixing it to red black tree rules
   fixTree(actualRoot, added);
 }
 Node* insert(Node* root, int addInput, Node* parent, Node* &added) {
+  // reached a leaf...
   if (root == NULL) {
     Node* newNode = new Node(addInput);
     newNode->setColor(0);
@@ -145,6 +153,7 @@ void printTree(Node* root, int depth) {
   if (root == NULL) {
     return;
   }
+  // recursing right
   if (root->getRight() != NULL) {
     printTree(root->getRight(), depth+1);
   }
@@ -152,6 +161,7 @@ void printTree(Node* root, int depth) {
     cout << '\t';
   }
   cout << root->getValue() << " " << root->getColor() << endl;
+  // recursing left
   if (root->getLeft() != NULL) {
     printTree(root->getLeft(), depth+1);
   }
@@ -159,16 +169,18 @@ void printTree(Node* root, int depth) {
 
 void rotateLeft(Node* &actualRoot, Node* &u) {
   Node* v = u->getRight();
-  cout << v->getValue() << endl;
+  //cout << v->getValue() << endl;
   u->setRight(v->getLeft());
   if (v->getLeft() != NULL) {
     v->getLeft()->setParent(u);
   }
   v->setParent(u->getParent());
+  // if the rotation involves the root...
   if (u->getParent() == NULL) {
-    cout << "new root" << endl;
+    //cout << "new root" << endl;
     actualRoot = v;
   }
+  // updating parent child relationships
   else if (u == u->getParent()->getLeft()) {
     u->getParent()->setLeft(v);
   }
@@ -186,10 +198,12 @@ void rotateRight(Node* &actualRoot, Node* &u) {
     v->getRight()->setParent(u);
   }
   v->setParent(u->getParent());
+  // if the rotation involves the root...
   if (u->getParent() == NULL) {
     cout << "new root" << endl;
     actualRoot = v;
   }
+  // updating parent child relationships
   else if (u == u->getParent()->getLeft()) {
     u->getParent()->setLeft(v);
   }
@@ -198,5 +212,5 @@ void rotateRight(Node* &actualRoot, Node* &u) {
   }
   v->setRight(u);
   u->setParent(v);
-  printTree(v, 0);
+  //printTree(v, 0);
 }
