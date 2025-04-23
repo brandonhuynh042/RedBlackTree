@@ -12,14 +12,14 @@ void fixTree(Node* &actualRoot, Node* added);
 void printTree(Node* root, int depth);
 void rotateLeft(Node* &actualRoot, Node* &u);
 void rotateRight(Node* &actualRoot, Node* &u);
-
+void searchTree(Node* root, Node* &target, int searchInput, bool &inTree);
 int main() {
   bool quit = false;
   char input[30];
   Node* root = NULL;
   do {
     // what do they want to do?
-     cout << "You can: \'ADD\' \'PRINT\' \'QUIT\'" << endl;
+    cout << "You can: \'ADD\' \'SEARCH\' \'DELETE\' \'PRINT\' \'QUIT\'" << endl;
     cin >> input;
     // quit...
     if (strcmp(input, "QUIT") == 0) {
@@ -46,11 +46,62 @@ int main() {
 	}
       }
     }
+    else if (strcmp(input, "SEARCH") == 0) {
+      cout << "What number are you looking for?" << endl;
+      int searchInput;
+      cin >> searchInput;
+      bool inTree;
+      Node* holder;
+      searchTree(root, holder, searchInput, inTree);
+      if (inTree) {
+	cout << searchInput << " is in the tree." << endl;
+      }
+      else {
+	cout << searchInput << " is not in the tree." << endl;
+      }
+    }
+    else if (strcmp(input, "DELETE") == 0) {
+      cout << "What number do you want to delete?" << endl;
+      int deleteInput;
+      cin >> deleteInput;
+      Node* toDelete;
+      bool inTree;
+      searchTree(root, toDelete, deleteInput, inTree);
+      if (inTree == false) {
+	cout << "Number not found..." << endl;
+      }
+      else {
+	//delete the toDelete node...
+      }
+    }
     else if (strcmp(input, "PRINT") == 0) {
       printTree(root, 0);
     }
   } while (quit != true);
   return 0;
+}
+
+void searchTree(Node* root, Node* &target, int searchInput, bool &inTree) {
+  // not in the tree.
+  if (root == NULL) {
+    target = NULL;
+    inTree = false;
+    return;
+  }
+  // found it.
+  if (root->getValue() == searchInput) {
+    target = root;
+    inTree = true;
+    return;
+  }
+  // determine if it's bigger or smaller, move down tree accordingly
+  if (searchInput < root->getValue()) {
+    searchTree(root->getLeft(), target, searchInput, inTree);
+  }
+  else {
+    searchTree(root->getRight(), target, searchInput, inTree);
+  }
+  return;
 }
 
 void add(Node* &actualRoot, int addInput) {
