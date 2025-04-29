@@ -13,6 +13,10 @@ void printTree(Node* root, int depth);
 void rotateLeft(Node* &actualRoot, Node* &u);
 void rotateRight(Node* &actualRoot, Node* &u);
 void searchTree(Node* root, Node* &target, int searchInput, bool &inTree);
+void shiftNodes(Node* &root, Node* u, Node* v);
+void deleteNode(Node* &root, Node* toDelete);
+Node* successor(Node* root, int target);
+
 int main() {
   bool quit = false;
   char input[30];
@@ -71,7 +75,7 @@ int main() {
 	cout << "Number not found..." << endl;
       }
       else {
-	//delete the toDelete node...
+	deleteNode(root, toDelete);
       }
     }
     else if (strcmp(input, "PRINT") == 0) {
@@ -264,4 +268,82 @@ void rotateRight(Node* &actualRoot, Node* &u) {
   v->setRight(u);
   u->setParent(v);
   //printTree(v, 0);
+}
+
+void shiftNodes(Node* &root, Node* u, Node* v) {
+  // is the old node the root?
+  if (u->getParent() == NULL) {
+    root = v;
+  }
+  else if (u == u->getParent()->getLeft()) {
+    u->getParent()->setLeft(v);
+  }
+  else {
+    u->getParent()->setRight(v);
+  }
+  // point to old node's parent
+  v->setParent(u->getParent());
+}
+
+void deleteNode(Node* &root, Node* toDelete) {
+  Node* del = toDelete;
+  int delColor = del->getColor();
+  // one child
+  cout <<  del->getValue() << endl;
+  if (toDelete->getLeft() == NULL) {
+    Node* newNode = toDelete->getLeft();
+    cout << "here 2" << endl;
+    shiftNodes(root, toDelete, newNode);
+  }
+  else if (toDelete->getRight() == NULL) {
+    Node* newNode = toDelete->getRight();
+    shiftNodes(root, toDelete, newNode);
+  }
+  // two children.
+  else {
+    //find successor
+    del = successor(root, toDelete->getValue());
+    delColor = del->getColor();
+    Node* newNode = del->getRight();
+    if (del != toDelete->getRight()) {
+      Node* right = del->getRight();
+      shiftNodes(root, del, right);
+    }
+    else {
+      newNode->setParent(del);
+    }
+    shiftNodes(root, toDelete, del);
+    del->setLeft(toDelete->getLeft());
+    del->getLeft()->setParent(del);
+    del->setColor(toDelete->getColor());
+  }
+  if (delColor == 1) {
+    //fix violations
+  }
+}
+
+// adapted from https://www.geeksforgeeks.org/inorder-successor-in-binary-search-tree/
+Node* successor(Node* root, int target) {
+  if (root == NULL) {
+    return NULL;
+  }
+  if (root->getValue() == target && root->getRight() != NULL) {
+    Node* curr = root;
+    while (curr->getLeft() != NULL) {
+      curr = curr->getLeft();
+    }
+    return curr;
+  }
+  Node* succ = NULL;
+  Node* curr = root;
+  while (curr != NULL) {
+    if (target < curr->getValue()) {
+      succ = curr;
+      curr = curr->getLeft();
+    }
+    else if (target >= curr->getValue()) {
+      curr = curr->getRight();
+    }
+  }
+  return succ;
 }
