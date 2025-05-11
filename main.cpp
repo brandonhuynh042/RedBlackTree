@@ -9,11 +9,12 @@ using namespace std;
 void add(Node* &actualRoot, int addInput);
 Node* insert(Node* root, int value, Node* parent, Node* &added);
 void fixTree(Node* &actualRoot, Node* added);
+void fixTreeDel(Node* &actualRoot, Node* deleted);
 void printTree(Node* root, int depth);
 void rotateLeft(Node* &actualRoot, Node* &u);
 void rotateRight(Node* &actualRoot, Node* &u);
 void searchTree(Node* root, Node* &target, int searchInput, bool &inTree);
-void remove(Node* parent, int delInput, Node* &root);
+void remove(Node* parent, int delInput, Node* &root, Node* &replacement);
 
 int main() {
   bool quit = false;
@@ -68,14 +69,15 @@ int main() {
       cin >> deleteInput;
       Node* toDelete;
       bool inTree;
+      Node* replacement;
       searchTree(root, toDelete, deleteInput, inTree);
       if (inTree == false) {
 	cout << "Number not found..." << endl;
       }
       else {
-	remove(root, deleteInput, root);
+	remove(root, deleteInput, root, replacement);
 	if (toDelete->getColor() == 1) {
-	  //fix it
+	  fixTreeDel(root, replacement);
 	}
       }
     }
@@ -140,7 +142,7 @@ Node* insert(Node* root, int addInput, Node* parent, Node* &added) {
 
 void fixTree(Node* &actualRoot, Node* added) {
   // going bottom up iteratively
-  while (added != actualRoot && added->getParent() && added->getParent()->getColor() == 0) {
+  while (added != actualRoot && added->getParent()->getColor() == 0) {
     Node* parent = added->getParent();
     Node* grandparent = parent->getParent();
     // hit the top of the tree?
@@ -171,7 +173,7 @@ void fixTree(Node* &actualRoot, Node* added) {
         parent->setColor(1);
         grandparent->setColor(0);
         added = parent;
-	return; // no need to escalate
+	break; // no need to escalate
       }
     }
     // parent is on right.,.
@@ -198,7 +200,7 @@ void fixTree(Node* &actualRoot, Node* added) {
         parent->setColor(1);
         grandparent->setColor(0);
         added = parent;
-	return; // no need to escalate
+	break; // no need to escalate
       }
     }
   }
@@ -277,7 +279,7 @@ void rotateRight(Node* &actualRoot, Node* &u) {
 }
 
 
-void remove(Node* parent, int delInput, Node* &root) {
+void remove(Node* parent, int delInput, Node* &root, Node* &replacement) {
   // empty tree
   if (root == NULL) {
     cout << "Empty tree!" << endl;
@@ -287,6 +289,7 @@ void remove(Node* parent, int delInput, Node* &root) {
   if (parent->getValue() == delInput) {
     // no children, delete the root
     if (parent->getRight() == NULL && parent->getLeft() == NULL) {
+      replacement = NULL;
       delete root;
       root = NULL;
       return;
@@ -294,6 +297,7 @@ void remove(Node* parent, int delInput, Node* &root) {
     // only left child, right child becomes new root
     if (parent->getRight() == NULL) {
       Node* temp = root;
+      replacement = parent->getLeft();
       root = parent->getLeft();
       root->setParent(NULL);
       delete temp;
@@ -302,6 +306,7 @@ void remove(Node* parent, int delInput, Node* &root) {
     // only right child, left child becomes new root
     if (parent->getLeft() == NULL) {
       Node* temp = root;
+      replacement = parent->getRight();
       root = parent->getRight();
       root->setParent(NULL);
       delete temp;
@@ -313,6 +318,7 @@ void remove(Node* parent, int delInput, Node* &root) {
       // right child doesn't have a left to search through so it just becomes the new root
       if (temp->getLeft() == NULL) {
 	root->setValue(temp->getValue());
+	replacement = root;
 	root->setRight(temp->getRight());
 	root->getRight()->setParent(root);
 	delete temp;
@@ -327,6 +333,7 @@ void remove(Node* parent, int delInput, Node* &root) {
     }
     // this becomes the new root, delete the leaf
     root->setValue(temp->getValue());
+    replacement = root;
     if (temp->getRight() != NULL) {
       pTemp->setLeft(temp->getRight());
     }
@@ -345,6 +352,7 @@ void remove(Node* parent, int delInput, Node* &root) {
     // no children, remove the link to parent and free memory
     if (parent->getLeft()->getLeft() == NULL && parent->getLeft()->getRight() == NULL) {
       Node* temp = parent->getLeft();
+      replacement = NULL;
       parent->setLeft(NULL);
       delete temp;
       return;
@@ -352,6 +360,7 @@ void remove(Node* parent, int delInput, Node* &root) {
     // only right child, that replaces it's parent
     if (parent->getLeft()->getLeft() == NULL) {
       Node* temp = parent->getLeft();
+      replacement = temp->getRight();
       parent->setLeft(temp->getRight());
       parent->getLeft()->setParent(parent);
       delete temp;
@@ -360,6 +369,7 @@ void remove(Node* parent, int delInput, Node* &root) {
     // only left child, that replaces it's parent
     else if (parent->getLeft()->getRight() == NULL) {
       Node* temp = parent->getLeft();
+      replacement = temp->getLeft();
       parent->setLeft(temp->getLeft());
       parent->getLeft()->setParent(parent);
       delete temp;
@@ -370,6 +380,7 @@ void remove(Node* parent, int delInput, Node* &root) {
     // if the right child doesn't have a left child, it's value goes to the parent and the child gets deleted.
     if (temp->getLeft() == NULL) {
       parent->getLeft()->setValue(temp->getValue());
+      replacement = parent->getLeft();
       if (temp->getRight() != NULL) {
         parent->getLeft()->setRight(temp->getRight());
 	parent->getLeft()->getRight()->setParent(parent->getLeft());
@@ -389,6 +400,7 @@ void remove(Node* parent, int delInput, Node* &root) {
     }
     // replace the place to delete's value with the successor, delete the former successor
     parent->getLeft()->setValue(temp->getValue());
+    replacement = parent->getLeft();
     if (temp->getRight() != NULL) {
       pTemp->setLeft(temp->getRight());
       pTemp->getLeft()->setParent(pTemp);
@@ -405,12 +417,14 @@ void remove(Node* parent, int delInput, Node* &root) {
   if (parent->getRight()->getValue() == delInput) {
     if (parent->getRight()->getLeft() == NULL && parent->getRight()->getRight() == NULL) {
       Node* temp = parent->getRight();
+      replacement = NULL;
       parent->setRight(NULL);
       delete temp;
       return;
     }
     if (parent->getRight()->getLeft() == NULL) {
       Node* temp = parent->getRight();
+      replacement = temp->getRight();
       parent->setRight(temp->getRight());
       parent->getRight()->setParent(parent);
       delete temp;
@@ -418,6 +432,7 @@ void remove(Node* parent, int delInput, Node* &root) {
     }
     else if (parent->getRight()->getRight() == NULL) {
       Node* temp = parent->getRight();
+      replacement = temp->getLeft();
       parent->setRight(temp->getLeft());
       parent->getRight()->setParent(parent);
       delete temp;
@@ -426,6 +441,7 @@ void remove(Node* parent, int delInput, Node* &root) {
     Node* temp = parent->getRight()->getRight();
     if (temp->getLeft() == NULL) {
       parent->getRight()->setValue(temp->getValue());
+      replacement = parent->getRight();
       if (temp->getRight() != NULL) {
 	parent->getRight()->setRight(temp->getRight());
 	parent->getRight()->getRight()->setParent(parent->getRight());
@@ -443,6 +459,7 @@ void remove(Node* parent, int delInput, Node* &root) {
       temp = temp->getLeft();
     }
     parent->getRight()->setValue(temp->getValue());
+    replacement = parent->getRight();
     if (temp->getRight() != NULL) {
       pTemp->setLeft(temp->getRight());
       pTemp->getLeft()->setParent(pTemp);
@@ -461,10 +478,44 @@ void remove(Node* parent, int delInput, Node* &root) {
   }
   // recurse left if it's smaller
   if (parent->getValue() > delInput) {
-    remove(parent->getLeft(), delInput, root);
+    remove(parent->getLeft(), delInput, root, replacement);
   }
   // recurse right if it's bigger
   else {
-    remove(parent->getRight(), delInput, root);
+    remove(parent->getRight(), delInput, root, replacement);
+  }
+}
+
+void fixTreeDel(Node* &actualRoot, Node* deleted) {
+  while (deleted != actualRoot && (deleted == NULL || deleted->getColor() == 1)) {
+    Node* parent;
+    if (deleted != NULL) {
+      parent = deleted->getParent();
+    }
+    else {
+      parent = NULL;
+    }
+    // replacement is a left child
+    if (deleted == parent->getLeft()) {
+      Node* sibling = parent->getRight();
+      // red sibling
+      if (sibling && sibling->getColor() == 0) {
+	sibling->setColor(1);
+	parent->setColor(0);
+	rotateLeft(actualRoot, parent);
+	sibling = parent->getRight();
+      }
+    }
+    // replacement is a right child
+    else {
+      Node* sibling = parent->getLeft();
+      // red sibling
+      if (sibling && sibling->getColor() == 0) {
+	sibling->setColor(1);
+	parent->setColor(0);
+	rotateRight(actualRoot, parent);
+	sibling = parent->getLeft();
+      }
+    }
   }
 }
