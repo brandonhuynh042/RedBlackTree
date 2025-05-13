@@ -76,9 +76,8 @@ int main() {
       }
       else {
 	remove(root, deleteInput, root, replacement);
-	if (toDelete->getColor() == 1) {
+	  cout << "fixing!" << endl;
 	  fixTreeDel(root, replacement);
-	}
       }
     }
     else if (strcmp(input, "PRINT") == 0) {
@@ -488,12 +487,21 @@ void remove(Node* parent, int delInput, Node* &root, Node* &replacement) {
 
 void fixTreeDel(Node* &actualRoot, Node* deleted) {
   while (deleted != actualRoot && (deleted == NULL || deleted->getColor() == 1)) {
-    Node* parent;
+    Node* parent = NULL;
     if (deleted != NULL) {
       parent = deleted->getParent();
     }
     else {
-      parent = NULL;
+      Node* curr = actualRoot;
+      while (curr != NULL) {
+	 if (curr->getLeft() == NULL || curr->getRight() == NULL) {
+          if (curr->getLeft() == deleted || curr->getRight() == deleted) {
+            parent = curr;
+            break;
+          }
+	 }
+      }
+      break;
     }
     // replacement is a left child
     if (deleted == parent->getLeft()) {
@@ -504,6 +512,30 @@ void fixTreeDel(Node* &actualRoot, Node* deleted) {
 	parent->setColor(0);
 	rotateLeft(actualRoot, parent);
 	sibling = parent->getRight();
+      }
+      // black sibling, black/null children
+      if ((sibling->getLeft() == NULL || sibling->getLeft()->getColor() == 1) && (sibling->getRight() == NULL || sibling->getRight()->getColor() == 1)) {
+	sibling->setColor(0);
+	deleted = parent;
+      }
+      else {
+	// sibling's right is black/null, left red
+	if (sibling->getRight() == NULL || sibling->getRight()->getColor() == 1) {
+	  if (sibling->getLeft()) {
+	    sibling->getLeft()->setColor(1);
+	  }
+	  sibling->setColor(0);
+	  rotateRight(actualRoot, sibling);
+	  sibling = parent->getRight();
+	}
+	// sibling's right is red 
+	sibling->setColor(parent->getColor());
+	parent->setColor(1);
+	if (sibling->getRight()) {
+	  sibling->getRight()->setColor(1);
+	}
+	rotateLeft(actualRoot, parent);
+	deleted = parent;
       }
     }
     // replacement is a right child
@@ -516,6 +548,30 @@ void fixTreeDel(Node* &actualRoot, Node* deleted) {
 	rotateRight(actualRoot, parent);
 	sibling = parent->getLeft();
       }
+       if ((sibling->getLeft() == NULL || sibling->getLeft()->getColor() == 1) && (sibling->getRight() == NULL || sibling->getRight()->getColor() == 1)) {
+        sibling->setColor(0);
+        deleted = parent;
+      }
+       else {
+	 if (sibling->getLeft() == NULL || sibling->getLeft()->getColor() == 1) {
+	   if (sibling->getRight()) {
+	     sibling->getRight()->setColor(1);
+	   }
+	   sibling->setColor(0);
+	   rotateLeft(actualRoot, sibling);
+	   sibling = parent->getLeft();
+	 }
+	 sibling->setColor(parent->getColor());
+	 parent->setColor(1);
+	 if (sibling->getLeft()) {
+	   sibling->getLeft()->setColor(1);
+	 }
+	 rotateRight(actualRoot, parent);
+	 deleted = actualRoot;
+       }
     }
+  }
+  if (deleted != NULL) {
+    deleted->setColor(1);
   }
 }
