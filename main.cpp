@@ -76,9 +76,15 @@ int main() {
 	cout << "Number not found..." << endl;
       }
       else {
+	cout << toDelete->getValue() << " "  << toDelete->getColor() << endl;
+	if (toDelete->getColor() == 1) {
 	remove(root, deleteInput, root, replacement, reParent);
-	  cout << "fixing!" << endl;
-	  fixTreeDel(root, replacement, reParent);
+	cout << "fixing!" << endl;
+	fixTreeDel(root, replacement, reParent);
+	}
+	else {
+	  remove(root, deleteInput, root, replacement, reParent);
+	}
       }
     }
     else if (strcmp(input, "PRINT") == 0) {
@@ -324,8 +330,10 @@ void remove(Node* parent, int delInput, Node* &root, Node* &replacement, Node* &
 	replacement = root;
 	reParent = parent;
 	root->setRight(temp->getRight());
-	root->getRight()->setParent(root);
-	delete temp;
+        if (root->getRight()) {
+	  root->getRight()->setParent(root);
+	}
+        delete temp;
 	return;
       }
       // otherwise, traverse until the leftmost child of the right child
