@@ -76,16 +76,12 @@ int main() {
 	cout << "Number not found..." << endl;
       }
       else {
-	cout << toDelete->getValue() << " "  << toDelete->getColor() << endl;
-	if (toDelete->getColor() == 1) {
 	remove(root, deleteInput, root, replacement, reParent);
-	cout << "fixing!" << endl;
-	fixTreeDel(root, replacement, reParent);
-	}
-	else {
+	cout << replacement->getValue() << " " << replacement->getColor() << endl;
+	if (replacement->getColor() == 1) {
 	  remove(root, deleteInput, root, replacement, reParent);
-	}
-      }
+        }
+    }
     }
     else if (strcmp(input, "PRINT") == 0) {
       printTree(root, 0);
@@ -598,7 +594,6 @@ void fixTreeDel(Node* &actualRoot, Node* deleted, Node* parent) {
       }
     }
   }
-
   if (deleted != NULL) {
     deleted->setColor(1);
   }
