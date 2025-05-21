@@ -76,10 +76,10 @@ int main() {
 	cout << "Number not found..." << endl;
       }
       else {
+	int delColor = toDelete->getColor();
 	remove(root, deleteInput, root, replacement, reParent);
-	cout << replacement->getValue() << " " << replacement->getColor() << endl;
-	if (replacement->getColor() == 1) {
-	  remove(root, deleteInput, root, replacement, reParent);
+	if (delColor == 1) {
+	  fixTreeDel(root, replacement, reParent);
         }
     }
     }
@@ -292,7 +292,7 @@ void remove(Node* parent, int delInput, Node* &root, Node* &replacement, Node* &
     // no children, delete the root
     if (parent->getRight() == NULL && parent->getLeft() == NULL) {
       replacement = NULL;
-      reParent = parent;
+      reParent = parent->getParent();
       delete root;
       root = NULL;
       return;
@@ -323,7 +323,7 @@ void remove(Node* parent, int delInput, Node* &root, Node* &replacement, Node* &
       // right child doesn't have a left to search through so it just becomes the new root
       if (temp->getLeft() == NULL) {
 	root->setValue(temp->getValue());
-	replacement = root;
+	replacement = temp->getRight();
 	reParent = parent;
 	root->setRight(temp->getRight());
         if (root->getRight()) {
@@ -341,8 +341,8 @@ void remove(Node* parent, int delInput, Node* &root, Node* &replacement, Node* &
     }
     // this becomes the new root, delete the leaf
     root->setValue(temp->getValue());
-    replacement = root;
-    reParent = parent;
+    replacement = temp->getRight();
+    reParent = pTemp;
     if (temp->getRight() != NULL) {
       pTemp->setLeft(temp->getRight());
     }
@@ -362,7 +362,7 @@ void remove(Node* parent, int delInput, Node* &root, Node* &replacement, Node* &
     if (parent->getLeft()->getLeft() == NULL && parent->getLeft()->getRight() == NULL) {
       Node* temp = parent->getLeft();
       replacement = NULL;
-      reParent = parent;
+      reParent = NULL;
       parent->setLeft(NULL);
       delete temp;
       return;
@@ -371,7 +371,7 @@ void remove(Node* parent, int delInput, Node* &root, Node* &replacement, Node* &
     if (parent->getLeft()->getLeft() == NULL) {
       Node* temp = parent->getLeft();
       replacement = temp->getRight();
-      reParent = temp;
+      reParent = parent;
       parent->setLeft(temp->getRight());
       parent->getLeft()->setParent(parent);
       delete temp;
@@ -381,7 +381,7 @@ void remove(Node* parent, int delInput, Node* &root, Node* &replacement, Node* &
     else if (parent->getLeft()->getRight() == NULL) {
       Node* temp = parent->getLeft();
       replacement = temp->getLeft();
-      reParent = temp;
+      reParent = parent;
       parent->setLeft(temp->getLeft());
       parent->getLeft()->setParent(parent);
       delete temp;
@@ -392,8 +392,8 @@ void remove(Node* parent, int delInput, Node* &root, Node* &replacement, Node* &
     // if the right child doesn't have a left child, it's value goes to the parent and the child gets deleted.
     if (temp->getLeft() == NULL) {
       parent->getLeft()->setValue(temp->getValue());
-      replacement = parent->getLeft();
-      reParent = parent;
+      replacement = temp->getRight();
+      reParent = parent->getLeft();
       if (temp->getRight() != NULL) {
         parent->getLeft()->setRight(temp->getRight());
 	parent->getLeft()->getRight()->setParent(parent->getLeft());
@@ -413,8 +413,8 @@ void remove(Node* parent, int delInput, Node* &root, Node* &replacement, Node* &
     }
     // replace the place to delete's value with the successor, delete the former successor
     parent->getLeft()->setValue(temp->getValue());
-    replacement = parent->getLeft();
-    reParent = parent;
+    replacement = temp->getRight();
+    reParent = pTemp;
     if (temp->getRight() != NULL) {
       pTemp->setLeft(temp->getRight());
       pTemp->getLeft()->setParent(pTemp);
@@ -432,7 +432,7 @@ void remove(Node* parent, int delInput, Node* &root, Node* &replacement, Node* &
     if (parent->getRight()->getLeft() == NULL && parent->getRight()->getRight() == NULL) {
       Node* temp = parent->getRight();
       replacement = NULL;
-      reParent = parent;
+      reParent = NULL;
       parent->setRight(NULL);
       delete temp;
       return;
@@ -440,7 +440,7 @@ void remove(Node* parent, int delInput, Node* &root, Node* &replacement, Node* &
     if (parent->getRight()->getLeft() == NULL) {
       Node* temp = parent->getRight();
       replacement = temp->getRight();
-      reParent = temp;
+      reParent = parent;
       parent->setRight(temp->getRight());
       parent->getRight()->setParent(parent);
       delete temp;
@@ -458,8 +458,8 @@ void remove(Node* parent, int delInput, Node* &root, Node* &replacement, Node* &
     Node* temp = parent->getRight()->getRight();
     if (temp->getLeft() == NULL) {
       parent->getRight()->setValue(temp->getValue());
-      replacement = parent->getRight();
-      reParent = parent;
+      replacement = temp->getRight();
+      reParent = parent->getRight();
       if (temp->getRight() != NULL) {
 	parent->getRight()->setRight(temp->getRight());
 	parent->getRight()->getRight()->setParent(parent->getRight());
@@ -477,8 +477,8 @@ void remove(Node* parent, int delInput, Node* &root, Node* &replacement, Node* &
       temp = temp->getLeft();
     }
     parent->getRight()->setValue(temp->getValue());
-    replacement = parent->getRight();
-    reParent = parent;
+    replacement = temp->getRight();
+    reParent = pTemp;
     if (temp->getRight() != NULL) {
       pTemp->setLeft(temp->getRight());
       pTemp->getLeft()->setParent(pTemp);
